@@ -30,8 +30,22 @@ func input(str string) string {
 	return response
 }
 
+// Separates a given expression into tokens and categorizes each.
+// Need to implement categorizing and error handling for invalid symbols
+func lexer(str string) map[string]string {
+	lexed := make(map[string]string) // placeholder for the return statement
+
+	// This for loop will iterate through the expression,
+	// evaluate each char, and append to the map
+	for i := 0; i < len(str); i++ {
+		fmt.Print(string(str[i]))
+	}
+
+	return lexed
+}
+
 func main() {
 	// Demonstrates usage of the input function.
 	getInput := input("Enter an equation (without spaces): ")
-	fmt.Println(getInput) // temporary usage of the equation
+	lexer(getInput)
 }
