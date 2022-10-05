@@ -12,23 +12,7 @@ package main
 
 import (
 	"fmt"
-	"log"
 )
-
-// Python-like implementation for getting user input in a condensed format.
-// Might only call this function once, in which case I will remove it later.
-func input(str string) string {
-	var response string
-	fmt.Print(str)
-
-	_, err := fmt.Scanln(&response)
-
-	if err != nil {
-		log.Fatal(err)
-	}
-
-	return response
-}
 
 // Separates a given expression into tokens and categorizes each.
 // Need to implement categorizing and error handling for invalid symbols
