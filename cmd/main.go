@@ -11,6 +11,7 @@
 package main
 
 import (
+	p "calculator/pkg"
 	"fmt"
 	"log"
 	"strconv"
@@ -103,7 +104,7 @@ func lexer(str string) []string {
 
 func main() {
 	// Demonstrates usage of the input function.
-	getInput := input("Enter an equation (without spaces): ")
+	getInput := p.Input("Enter an equation (without spaces): ")
 	lexedExpression := lexer(getInput)
 	fmt.Println(lexedExpression)
 }

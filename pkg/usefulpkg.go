@@ -5,27 +5,27 @@
 	In that case, the "import" statement will need updated accordingly.
 */
 
-package main
+package pkg
 
 import (
 	"fmt"
 	"log"
 )
 
-// Simplifies general error handling.
-func handleError(err error) {
+// HandleError simplifies general error handling.
+func HandleError(err error) {
 	if err != nil {
 		log.Fatal(err)
 	}
 }
 
-// Python-like implementation for getting user input in a condensed format.
-func input(str string) string {
+// Input is a Python-like implementation for getting user input in a condensed format.
+func Input(str string) string {
 	var response string
 	fmt.Print(str)
 
 	_, err := fmt.Scanln(&response)
-	handleError(err)
+	HandleError(err)
 
 	return response
 }
