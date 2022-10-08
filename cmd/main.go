@@ -72,28 +72,22 @@ func lexer(str string) []string {
 
 		// Tokenizes symbols
 		// Throws errors for invalid characters and double operators
-		switch tempChar {
-		case "(":
+		switch {
+		case tempChar == "(":
 			lexed = append(lexed, tempChar)
 			parenCount++
-		case ")":
+		case tempChar == ")":
 			lexed = append(lexed, tempChar)
 			parenCount--
-		case "+":
-			fallthrough
-		case "-":
-			fallthrough
-		case "*":
-			fallthrough
-		case "/":
+		case isOperator(tempChar):
 			lexed = append(lexed, tempChar)
 			if i != 0 {
 				checkDoubleOperator(lexed[len(lexed)-2], lexed[len(lexed)-1])
 			}
+		case isFloatPart(tempChar):
+			tempNum += tempChar
 		default:
-			if !isFloatPart(tempChar) {
-				log.Fatal("Invalid character entered: " + tempChar)
-			}
+			log.Fatal("Invalid character entered: " + tempChar)
 		}
 
 		// Checks parenthesis count and throws errors for invalid values
@@ -101,11 +95,6 @@ func lexer(str string) []string {
 			log.Fatal("Syntax error: \")\" before \"(\"")
 		} else if parenCount != 0 && i == len(str)-1 {
 			log.Fatal("Syntax error: unmatched \"(\"")
-		}
-
-		// Builds numbers char by char. Works for integers and floats
-		if isFloatPart(tempChar) {
-			tempNum += tempChar
 		}
 
 		// If the loop is ending and a number is being built,
