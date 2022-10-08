@@ -17,16 +17,6 @@ import (
 	"strconv"
 )
 
-// Tokens for the lexer:
-
-var LP = "LPAREN"
-var RP = "RPAREN"
-var A = "ADD"
-var S = "SUB/NEG"
-var M = "MULTI"
-var D = "DIV"
-var N = "NUM:"
-
 // Checks if a char is part of a floating-point number, i.e. in {0,1,2,3,4,5,6,7,8,9,.}
 func isFloatPart(str string) bool {
 	_, err := strconv.ParseInt(str, 10, 8)
@@ -53,7 +43,7 @@ func lexer(str string) []string {
 		// Checks if a number was being made, but is now ended
 		// If true, this appends a token for the number
 		if !isFloatPart(tempChar) && tempNum != "" {
-			lexed = append(lexed, N+tempNum)
+			lexed = append(lexed, tempNum)
 			tempNum = ""
 		}
 
@@ -61,19 +51,19 @@ func lexer(str string) []string {
 		// Throws error for invalid characters
 		switch tempChar {
 		case "(":
-			lexed = append(lexed, LP)
+			lexed = append(lexed, "(")
 			parenCount++
 		case ")":
-			lexed = append(lexed, RP)
+			lexed = append(lexed, ")")
 			parenCount--
 		case "+":
-			lexed = append(lexed, A)
+			lexed = append(lexed, "+")
 		case "-":
-			lexed = append(lexed, S)
+			lexed = append(lexed, "-")
 		case "*":
-			lexed = append(lexed, M)
+			lexed = append(lexed, "*")
 		case "/":
-			lexed = append(lexed, D)
+			lexed = append(lexed, "/")
 		default:
 			if !isFloatPart(tempChar) {
 				log.Fatal("Invalid character entered: " + tempChar)
@@ -95,7 +85,7 @@ func lexer(str string) []string {
 		// If the loop is ending and a number is being built,
 		// then appends the number
 		if i == len(str)-1 && tempNum != "" {
-			lexed = append(lexed, N+tempNum)
+			lexed = append(lexed, tempNum)
 		}
 	}
 
