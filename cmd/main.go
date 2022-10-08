@@ -28,6 +28,29 @@ func isFloatPart(str string) bool {
 	}
 }
 
+// Checks if the string is an operator
+func isOperator(str string) bool {
+	ops := [4]string{"+", "-", "*", "/"}
+
+	// Checks the input string against each operator
+	for i := 0; i < 4; i++ {
+		if ops[i] == str {
+			return true
+		}
+	}
+
+	// If no operator is found, then the string is not an operator
+	return false
+}
+
+// Checks for consecutive operators and throws an error if applicable
+// For the implementation used here, str2 is assumed to be an operator
+func checkDoubleOperator(str1 string, str2 string) {
+	if isOperator(str1) {
+		log.Fatal("Syntax error: double operator used \"" + str1 + "\" and \"" + str2 + "\"")
+	}
+}
+
 // Separates a given expression into tokens
 // Error-handling for invalid symbols and invalid parenthesis count
 func lexer(str string) []string {
@@ -48,22 +71,25 @@ func lexer(str string) []string {
 		}
 
 		// Tokenizes symbols
-		// Throws error for invalid characters
+		// Throws errors for invalid characters and double operators
 		switch tempChar {
 		case "(":
-			lexed = append(lexed, "(")
+			lexed = append(lexed, tempChar)
 			parenCount++
 		case ")":
-			lexed = append(lexed, ")")
+			lexed = append(lexed, tempChar)
 			parenCount--
 		case "+":
-			lexed = append(lexed, "+")
+			fallthrough
 		case "-":
-			lexed = append(lexed, "-")
+			fallthrough
 		case "*":
-			lexed = append(lexed, "*")
+			fallthrough
 		case "/":
-			lexed = append(lexed, "/")
+			lexed = append(lexed, tempChar)
+			if i != 0 {
+				checkDoubleOperator(lexed[len(lexed)-2], lexed[len(lexed)-1])
+			}
 		default:
 			if !isFloatPart(tempChar) {
 				log.Fatal("Invalid character entered: " + tempChar)
@@ -93,7 +119,8 @@ func lexer(str string) []string {
 }
 
 func main() {
-	// Demonstrates usage of the input function.
+	// Gets the expression from the user, runs it through the lexer,
+	// and prints the lexed expression if no errors are found
 	getInput := p.Input("Enter an equation (without spaces): ")
 	lexedExpression := lexer(getInput)
 	fmt.Println(lexedExpression)
