@@ -14,39 +14,30 @@ import (
 	p "calculator/pkg"
 	"fmt"
 	"log"
-	"strconv"
+	"strings"
 )
 
-// Checks if a char is part of a floating-point number, i.e. in {0,1,2,3,4,5,6,7,8,9,.}
-func isFloatPart(str string) bool {
-	_, err := strconv.ParseInt(str, 10, 8)
+// OPS and FLT are some helpful tokens
+var OPS = "+-*/"
+var FLT = "1234567890."
 
-	if err == nil || str == "." {
+// Checks if a char is a parenthesis and changes the count of parentheses accordingly
+func isParen(char string, count *int8) bool {
+	switch char {
+	case "(":
+		*count++
 		return true
-	} else {
+	case ")":
+		*count--
+		return true
+	default:
 		return false
 	}
 }
 
-// Checks if the string is an operator
-func isOperator(str string) bool {
-	ops := [4]string{"+", "-", "*", "/"}
-
-	// Checks the input string against each operator
-	for i := 0; i < 4; i++ {
-		if ops[i] == str {
-			return true
-		}
-	}
-
-	// If no operator is found, then the string is not an operator
-	return false
-}
-
 // Checks for consecutive operators and throws an error if applicable
-// For the implementation used here, str2 is assumed to be an operator
 func checkDoubleOperator(str1 string, str2 string) {
-	if isOperator(str1) {
+	if strings.ContainsAny(OPS, str1) && strings.ContainsAny(OPS, str2) {
 		log.Fatal("Syntax error: double operator used \"" + str1 + "\" and \"" + str2 + "\"")
 	}
 }
@@ -64,29 +55,19 @@ func lexer(str string) []string {
 		tempChar := string(str[i])
 
 		// Checks if a number was being made, but is now ended
-		// If true, this appends a token for the number
-		if !isFloatPart(tempChar) && tempNum != "" {
+		// If true, this appends the number
+		if !strings.ContainsAny(FLT, tempChar) && tempNum != "" {
 			lexed = append(lexed, tempNum)
 			tempNum = ""
 		}
 
 		// Tokenizes symbols
-		// Throws errors for invalid characters and double operators
-		switch {
-		case tempChar == "(":
+		// Throws errors for invalid characters
+		if isParen(tempChar, &parenCount) || strings.ContainsAny(OPS, tempChar) {
 			lexed = append(lexed, tempChar)
-			parenCount++
-		case tempChar == ")":
-			lexed = append(lexed, tempChar)
-			parenCount--
-		case isOperator(tempChar):
-			lexed = append(lexed, tempChar)
-			if i != 0 {
-				checkDoubleOperator(lexed[len(lexed)-2], lexed[len(lexed)-1])
-			}
-		case isFloatPart(tempChar):
+		} else if strings.ContainsAny(FLT, tempChar) {
 			tempNum += tempChar
-		default:
+		} else {
 			log.Fatal("Invalid character entered: " + tempChar)
 		}
 
@@ -95,6 +76,11 @@ func lexer(str string) []string {
 			log.Fatal("Syntax error: \")\" before \"(\"")
 		} else if parenCount != 0 && i == len(str)-1 {
 			log.Fatal("Syntax error: unmatched \"(\"")
+		}
+
+		// Various checks for syntax errors
+		for i := 0; i < len(lexed)-1; i++ {
+			checkDoubleOperator(lexed[i], lexed[i+1])
 		}
 
 		// If the loop is ending and a number is being built,
