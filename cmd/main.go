@@ -14,6 +14,7 @@ import (
 	p "calculator/pkg"
 	"fmt"
 	"log"
+	"strconv"
 	"strings"
 )
 
@@ -39,6 +40,31 @@ func isParen(char string, count *int8) bool {
 func checkDoubleOperator(str1 string, str2 string) {
 	if strings.ContainsAny(OPS, str1) && strings.ContainsAny(OPS, str2) {
 		log.Fatal("Syntax error: double operator used \"" + str1 + "\" and \"" + str2 + "\"")
+	}
+}
+
+// Checks for a number adjacent to a parenthesis in one of two forms: "3(" or ")3"
+func checkNumParen(str1 string, str2 string) {
+	// If err is nil, then the associated str is a float
+	_, err1 := strconv.ParseFloat(str1, 64)
+	_, err2 := strconv.ParseFloat(str2, 64)
+
+	// Conditional for checking for specifically the forms "5(" and ")5"
+	numParen := err1 == nil && str2 == "("
+	parenNum := str1 == ")" && err2 == nil
+
+	if numParen || parenNum {
+		log.Fatal("Syntax error: cannot put number next to parenthesis")
+	}
+}
+
+// Checks for "()" and ")("
+func checkOppositeParens(str1 string, str2 string) {
+	xParens := str1 == ")" && str2 == "("
+	oParens := str1 == "(" && str2 == ")"
+
+	if xParens || oParens {
+		log.Fatal("Syntax error: cannot put \"" + str1 + "\" next to \"" + str2 + "\"")
 	}
 }
 
@@ -78,15 +104,17 @@ func lexer(str string) []string {
 			log.Fatal("Syntax error: unmatched \"(\"")
 		}
 
-		// Various checks for syntax errors
-		for i := 0; i < len(lexed)-1; i++ {
-			checkDoubleOperator(lexed[i], lexed[i+1])
-		}
-
 		// If the loop is ending and a number is being built,
 		// then appends the number
 		if i == len(str)-1 && tempNum != "" {
 			lexed = append(lexed, tempNum)
+		}
+
+		// Various checks for syntax errors
+		for i := 0; i < len(lexed)-1; i++ {
+			checkDoubleOperator(lexed[i], lexed[i+1])
+			checkNumParen(lexed[i], lexed[i+1])
+			checkOppositeParens(lexed[i], lexed[i+1])
 		}
 	}
 
