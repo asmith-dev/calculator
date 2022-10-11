@@ -54,7 +54,7 @@ func checkNumParen(str1 string, str2 string) {
 	parenNum := str1 == ")" && err2 == nil
 
 	if numParen || parenNum {
-		log.Fatal("Syntax error: cannot put number next to parenthesis")
+		log.Fatal("Syntax error: cannot put \"" + str1 + "\" before \"" + str2 + "\"")
 	}
 }
 
@@ -109,13 +109,13 @@ func lexer(str string) []string {
 		if i == len(str)-1 && tempNum != "" {
 			lexed = append(lexed, tempNum)
 		}
+	}
 
-		// Various checks for syntax errors
-		for i := 0; i < len(lexed)-1; i++ {
-			checkDoubleOperator(lexed[i], lexed[i+1])
-			checkNumParen(lexed[i], lexed[i+1])
-			checkOppositeParens(lexed[i], lexed[i+1])
-		}
+	// Various checks for syntax errors
+	for i := 0; i < len(lexed)-1; i++ {
+		checkDoubleOperator(lexed[i], lexed[i+1])
+		checkNumParen(lexed[i], lexed[i+1])
+		checkOppositeParens(lexed[i], lexed[i+1])
 	}
 
 	return lexed
