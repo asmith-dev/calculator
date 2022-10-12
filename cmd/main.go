@@ -121,10 +121,65 @@ func lexer(str string) []string {
 	return lexed
 }
 
+// Parses a lexed expression into a hierarchy of expressions based on parenthesis
+// NEEDS: checking each expression at the end for hanging operators, i.e. 5+6* or /6*9+5
+func parser(lexed []string) [][][]string {
+	parsed := [][][]string{{{}}}
+	ec := []int{0} // expression count
+	var pc int     // parenthesis count
+
+	// Iterates through the lexed expression,
+	// allocating each expression to a list of expressions at different levels
+	// and then each level is an appended slice of expressions.
+	// The entire equation is level 0, the 1st level is the first layer of parentheses, etc.
+	for i := 0; i < len(lexed); i++ {
+		if lexed[i] == "(" {
+			// Ensures their is enough levels appended in "parsed" and "ec"
+			if len(parsed) < pc+2 {
+				parsed = append(parsed, [][]string{{}})
+				ec = append(ec, 0)
+			}
+
+			// Ensures there is enough expressions appended for the current level
+			if len(parsed[pc]) < ec[pc]+1 {
+				parsed[pc] = append(parsed[pc], []string{})
+			}
+
+			// Appends a reference, giving the slice position of the associated expression
+			eRef := "expr:" + strconv.Itoa(pc+1) + "." + strconv.Itoa(ec[pc+1])
+			parsed[pc][ec[pc]] = append(parsed[pc][ec[pc]], eRef)
+
+			pc++
+		} else if lexed[i] == ")" {
+			// Ending parenthesis marks the end of an expression,
+			// so this increments the expression count accordingly
+			ec[pc]++
+
+			pc--
+		} else if pc == 0 {
+			// The 0th level only ever needs one expression,
+			// thus it gets dealt with separately.
+			parsed[0][0] = append(parsed[0][0], lexed[i])
+		} else {
+			// Ensures there is enough expressions appended for the current level
+			if len(parsed[pc]) < ec[pc]+1 {
+				parsed[pc] = append(parsed[pc], []string{})
+			}
+
+			// This is the command to generally add code from the lexer to the parser
+			parsed[pc][ec[pc]] = append(parsed[pc][ec[pc]], lexed[i])
+		}
+	}
+
+	return parsed
+}
+
 func main() {
 	// Gets the expression from the user, runs it through the lexer,
 	// and prints the lexed expression if no errors are found
 	getInput := p.Input("Enter an equation (without spaces): ")
 	lexedExpression := lexer(getInput)
 	fmt.Println(lexedExpression)
+	parsedExpression := parser(lexedExpression)
+	fmt.Println(parsedExpression)
 }
