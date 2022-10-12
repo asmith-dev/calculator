@@ -23,8 +23,8 @@ var OPS = "+-*/"
 var FLT = "1234567890."
 
 // Checks if a char is a parenthesis and changes the count of parentheses accordingly
-func isParen(char string, count *int8) bool {
-	switch char {
+func isParen(str string, count *int8) bool {
+	switch str {
 	case "(":
 		*count++
 		return true
@@ -134,7 +134,7 @@ func parser(lexed []string) [][][]string {
 	// The entire equation is level 0, the 1st level is the first layer of parentheses, etc.
 	for i := 0; i < len(lexed); i++ {
 		if lexed[i] == "(" {
-			// Ensures their is enough levels appended in "parsed" and "ec"
+			// Ensures there is enough levels appended in "parsed" and "ec"
 			if len(parsed) < pc+2 {
 				parsed = append(parsed, [][]string{{}})
 				ec = append(ec, 0)
