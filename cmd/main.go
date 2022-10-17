@@ -122,7 +122,6 @@ func lexer(str string) []string {
 }
 
 // Parses a lexed expression into a hierarchy of expressions based on parenthesis
-// NEEDS: checking each expression at the end for hanging operators, i.e. 5+6* or /6*9+5
 func parser(lexed []string) [][][]string {
 	parsed := [][][]string{{{}}}
 	ec := []int{0} // expression count
@@ -171,12 +170,26 @@ func parser(lexed []string) [][][]string {
 		}
 	}
 
+	// Checking for hanging operators, i.e. 5+6* or /6*9+5
+	for i := 0; i < len(parsed); i++ {
+		for j := 0; j < len(parsed[i]); j++ {
+			if strings.Contains(OPS, parsed[i][j][0]) && parsed[i][j][0] != "-" {
+				log.Fatal("Syntax error: expression " + strconv.Itoa(i) + "." + strconv.Itoa(j) +
+					" cannot begin with \"" + parsed[i][j][0] + "\"")
+			}
+			if strings.Contains(OPS, parsed[i][j][len(parsed[i][j])-1]) {
+				log.Fatal("Syntax error: expression " + strconv.Itoa(i) + "." + strconv.Itoa(j) +
+					" cannot end with \"" + parsed[i][j][len(parsed[i][j])-1] + "\"")
+			}
+		}
+	}
+
 	return parsed
 }
 
 func main() {
-	// Gets the expression from the user, runs it through the lexer,
-	// and prints the lexed expression if no errors are found
+	// Gets the expression from the user, runs it through the lexer and the parser,
+	// and prints the lexed and parsed expressions if no errors are found
 	getInput := p.Input("Enter an equation (without spaces): ")
 	lexedExpression := lexer(getInput)
 	fmt.Println(lexedExpression)
