@@ -1,11 +1,11 @@
 /*
 	Calculator made in Go.
 
-	Gets an expression from the user, evaluates it, and returns the result.
-	Expression will be evaluated using the order of operations.
-	Supports the use of negatives and floats.
+	Gets an expression from the user, evaluates it, and prints the result.
+	Expressions are evaluated using the order of operations,
+	except minuses are interpreted as addition of negatives.
+	Supports the use of negatives, floats, and parentheses, but not exponents.
 	Valid operations will be +, -, *, and /.
-	Parentheses will be acceptable.
 */
 
 package main
@@ -19,7 +19,7 @@ import (
 )
 
 // OPS and FLT are some helpful tokens
-var OPS = "+-*/"
+var OPS = "*/+-"
 var FLT = "1234567890."
 
 // Checks if a char is a parenthesis and changes the count of parentheses accordingly
@@ -187,12 +187,115 @@ func parser(lexed []string) [][][]string {
 	return parsed
 }
 
+// Calculates the result of a [3]string
+// where the first/last indexes are floats and the middle is an operator
+func calcSimple(expr []string) string {
+	var1, _ := strconv.ParseFloat(expr[0], 64)
+	var2, _ := strconv.ParseFloat(expr[2], 64)
+
+	// Checks which operator is used and returns the calculated value
+	switch expr[1] {
+	case "*":
+		return strconv.FormatFloat(var1*var2, 'f', -1, 64)
+	case "/":
+		return strconv.FormatFloat(var1/var2, 'f', -1, 64)
+	case "+":
+		return strconv.FormatFloat(var1+var2, 'f', -1, 64)
+	}
+
+	// Returns an error string, since this code should never be reached
+	return "ERR"
+}
+
+// Calculates an expression using the order of operations,
+// except subtraction implies adding a negative
+func calcExpr(expr []string) []string {
+	// Expressions beginning with a minus imply the first value is negative
+	if expr[0] == "-" {
+		expr = append([]string{expr[0] + expr[1]}, expr[2:]...)
+	}
+
+	// The current operator, used to index OPS
+	currentOP := 0
+
+	var result string
+
+	// Continues until the result remains, i.e. len(expr)=1
+	for len(expr) > 1 {
+		for i := 0; i < len(expr); i++ {
+			// Replaces "minus a positive" with "plus a negative"
+			// and "minus a negative" with "plus a positive"
+			if expr[i] == "-" {
+				expr[i] = "+"
+				if string(expr[i+1][0]) == "-" {
+					expr[i+1] = expr[i+1][1:]
+				} else {
+					expr[i+1] = "-" + expr[i+1]
+				}
+			}
+
+			// Checks until it finds the current operator of OPS, excluding "-"
+			if expr[i] == string(OPS[:3][currentOP]) {
+				result = calcSimple(expr[i-1 : i+2])
+
+				// Updates the expression based on the location of the operator
+				switch i {
+				case 1:
+					expr = append([]string{result}, expr[3:]...)
+				case len(expr) - 2:
+					expr = append(expr[:len(expr)-3], result)
+				default:
+					expr = append(append(expr[:i-1], result), expr[i+2:]...)
+				}
+
+				break
+			}
+
+			// If the loop is ending and still hasn't found the current operator,
+			// then it assumes that that operator is no longer present and moves to the next one.
+			if i == len(expr)-1 {
+				currentOP++
+			}
+		}
+	}
+
+	return expr
+}
+
+// Calculates the result based on the entire parsed expression
+func calc(parsed [][][]string) string {
+	var eRef []string
+
+	// Calculates expressions based on a descending hierarchy,
+	// i.e. from most parenthetical to least
+	for i := len(parsed) - 1; i > -1; i-- {
+		for j := 0; j < len(parsed[i]); j++ {
+			// Iterates through the current expression,
+			// checks for references to expressions at higher levels,
+			// and replaces them accordingly
+			for k := 0; k < len(parsed[i][j]); k++ {
+				if strings.Contains(parsed[i][j][k], "expr") {
+					eRef = strings.Split(parsed[i][j][k][5:], ".")
+					ref1, _ := strconv.ParseInt(eRef[0], 10, 0)
+					ref2, _ := strconv.ParseInt(eRef[1], 10, 0)
+
+					parsed[i][j][k] = parsed[ref1][ref2][0]
+				}
+			}
+
+			// Replaces expressions with their results
+			parsed[i][j] = calcExpr(parsed[i][j])
+		}
+	}
+
+	// Returns a string of the result.
+	// Could easily have the function return a float instead with strconv.ParseFloat
+	return parsed[0][0][0]
+}
+
 func main() {
-	// Gets the expression from the user, runs it through the lexer and the parser,
-	// and prints the lexed and parsed expressions if no errors are found
-	getInput := p.Input("Enter an equation (without spaces): ")
-	lexedExpression := lexer(getInput)
-	fmt.Println(lexedExpression)
-	parsedExpression := parser(lexedExpression)
-	fmt.Println(parsedExpression)
+	// Gets the expression from the user, runs it through a lexer, parses it,
+	// and calculates the result and prints it
+	result := calc(parser(lexer(p.Input("Enter an equation (without spaces): "))))
+	fmt.Println("Answer is:", result)
 }
