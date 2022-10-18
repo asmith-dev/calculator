@@ -190,8 +190,10 @@ func parser(lexed []string) [][][]string {
 // Calculates the result of a [3]string
 // where the first/last indexes are floats and the middle is an operator
 func calcSimple(expr []string) string {
-	var1, _ := strconv.ParseFloat(expr[0], 64)
-	var2, _ := strconv.ParseFloat(expr[2], 64)
+	var1, err1 := strconv.ParseFloat(expr[0], 64)
+	p.HandleError(err1)
+	var2, err2 := strconv.ParseFloat(expr[2], 64)
+	p.HandleError(err2)
 
 	// Checks which operator is used and returns the calculated value
 	switch expr[1] {
@@ -276,8 +278,10 @@ func calc(parsed [][][]string) string {
 			for k := 0; k < len(parsed[i][j]); k++ {
 				if strings.Contains(parsed[i][j][k], "expr") {
 					eRef = strings.Split(parsed[i][j][k][5:], ".")
-					ref1, _ := strconv.ParseInt(eRef[0], 10, 0)
-					ref2, _ := strconv.ParseInt(eRef[1], 10, 0)
+					ref1, err1 := strconv.ParseInt(eRef[0], 10, 0)
+					p.HandleError(err1)
+					ref2, err2 := strconv.ParseInt(eRef[1], 10, 0)
+					p.HandleError(err2)
 
 					parsed[i][j][k] = parsed[ref1][ref2][0]
 				}
