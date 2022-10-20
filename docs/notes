@@ -1,2 +1,14 @@
-Test equation:
+The main goal of this program was not to make the best calculator.
+Rather, I wanted to:
+ *  Practice using Go and GitHub.
+ *  Organize my code efficiently and professionally.
+ *  Present my code as professionally as possible.
+ *  Get experience using version control, commits, pushes, etc.
+
+Since I am predominantly self-taught, a lot of my naming schema and organization is not reflective
+of professional standards. However, I tried my best to conform to standards where I was knowledgeable.
+
+
+The following is a test equation that I used frequently:
 -2+(5.2*6-88/(9-8))-(8*5)+9/1
+It should give an answer of -89.8. I checked this result against several other calculators.
