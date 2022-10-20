@@ -68,29 +68,29 @@ func checkOppositeParens(str1 string, str2 string) {
 	}
 }
 
-// Separates a given expression into tokens
+// Parses a given expression into numbers, operators, and parentheses
 // Error-handling for invalid symbols and invalid parenthesis count
-func lexer(str string) []string {
-	var lexed []string
+func parser(expr string) []string {
+	var parsed []string
 	var parenCount int8
 	var tempNum string
 
 	// This loop iterates through the expression,
-	// evaluates each char, and appends to the lexed slice.
-	for i := 0; i < len(str); i++ {
-		tempChar := string(str[i])
+	// evaluates each char, and appends to the parsed slice.
+	for i := 0; i < len(expr); i++ {
+		tempChar := string(expr[i])
 
 		// Checks if a number was being made, but is now ended
 		// If true, this appends the number
 		if !strings.ContainsAny(FLT, tempChar) && tempNum != "" {
-			lexed = append(lexed, tempNum)
+			parsed = append(parsed, tempNum)
 			tempNum = ""
 		}
 
-		// Tokenizes symbols
+		// Parses symbols and builds numbers
 		// Throws errors for invalid characters
 		if isParen(tempChar, &parenCount) || strings.ContainsAny(OPS, tempChar) {
-			lexed = append(lexed, tempChar)
+			parsed = append(parsed, tempChar)
 		} else if strings.ContainsAny(FLT, tempChar) {
 			tempNum += tempChar
 		} else {
@@ -100,56 +100,56 @@ func lexer(str string) []string {
 		// Checks parenthesis count and throws errors for invalid values
 		if parenCount < 0 {
 			log.Fatal("Syntax error: \")\" before \"(\"")
-		} else if parenCount != 0 && i == len(str)-1 {
+		} else if parenCount != 0 && i == len(expr)-1 {
 			log.Fatal("Syntax error: unmatched \"(\"")
 		}
 
 		// If the loop is ending and a number is being built,
 		// then appends the number
-		if i == len(str)-1 && tempNum != "" {
-			lexed = append(lexed, tempNum)
+		if i == len(expr)-1 && tempNum != "" {
+			parsed = append(parsed, tempNum)
 		}
 	}
 
 	// Various checks for syntax errors
-	for i := 0; i < len(lexed)-1; i++ {
-		checkDoubleOperator(lexed[i], lexed[i+1])
-		checkNumParen(lexed[i], lexed[i+1])
-		checkOppositeParens(lexed[i], lexed[i+1])
+	for i := 0; i < len(parsed)-1; i++ {
+		checkDoubleOperator(parsed[i], parsed[i+1])
+		checkNumParen(parsed[i], parsed[i+1])
+		checkOppositeParens(parsed[i], parsed[i+1])
 	}
 
-	return lexed
+	return parsed
 }
 
-// Parses a lexed expression into a hierarchy of expressions based on parenthesis
-func parser(lexed []string) [][][]string {
-	parsed := [][][]string{{{}}}
+// Organizes the parsed user-entered expression into a hierarchy of expressions based on parenthesis
+func calcTree(parsed []string) [][][]string {
+	ctree := [][][]string{{{}}}
 	ec := []int{0} // expression count
 	var pc int     // parenthesis count
 
-	// Iterates through the lexed expression,
-	// allocating each expression to a list of expressions at different levels
+	// Iterates through the parsed expression,
+	// allocating each expression to a list of expressions at different levels of the tree
 	// and then each level is an appended slice of expressions.
 	// The entire equation is level 0, the 1st level is the first layer of parentheses, etc.
-	for i := 0; i < len(lexed); i++ {
-		if lexed[i] == "(" {
-			// Ensures there is enough levels appended in "parsed" and "ec"
-			if len(parsed) < pc+2 {
-				parsed = append(parsed, [][]string{{}})
+	for i := 0; i < len(parsed); i++ {
+		if parsed[i] == "(" {
+			// Ensures there is enough levels appended in "ctree" and "ec"
+			if len(ctree) < pc+2 {
+				ctree = append(ctree, [][]string{{}})
 				ec = append(ec, 0)
 			}
 
 			// Ensures there is enough expressions appended for the current level
-			if len(parsed[pc]) < ec[pc]+1 {
-				parsed[pc] = append(parsed[pc], []string{})
+			if len(ctree[pc]) < ec[pc]+1 {
+				ctree[pc] = append(ctree[pc], []string{})
 			}
 
 			// Appends a reference, giving the slice position of the associated expression
 			eRef := "expr:" + strconv.Itoa(pc+1) + "." + strconv.Itoa(ec[pc+1])
-			parsed[pc][ec[pc]] = append(parsed[pc][ec[pc]], eRef)
+			ctree[pc][ec[pc]] = append(ctree[pc][ec[pc]], eRef)
 
 			pc++
-		} else if lexed[i] == ")" {
+		} else if parsed[i] == ")" {
 			// Ending parenthesis marks the end of an expression,
 			// so this increments the expression count accordingly
 			ec[pc]++
@@ -158,33 +158,33 @@ func parser(lexed []string) [][][]string {
 		} else if pc == 0 {
 			// The 0th level only ever needs one expression,
 			// thus it gets dealt with separately.
-			parsed[0][0] = append(parsed[0][0], lexed[i])
+			ctree[0][0] = append(ctree[0][0], parsed[i])
 		} else {
 			// Ensures there is enough expressions appended for the current level
-			if len(parsed[pc]) < ec[pc]+1 {
-				parsed[pc] = append(parsed[pc], []string{})
+			if len(ctree[pc]) < ec[pc]+1 {
+				ctree[pc] = append(ctree[pc], []string{})
 			}
 
-			// This is the command to generally add code from the lexer to the parser
-			parsed[pc][ec[pc]] = append(parsed[pc][ec[pc]], lexed[i])
+			// This is the command to generally add code from the parser to the calcTree
+			ctree[pc][ec[pc]] = append(ctree[pc][ec[pc]], parsed[i])
 		}
 	}
 
 	// Checking for hanging operators, i.e. 5+6* or /6*9+5
-	for i := 0; i < len(parsed); i++ {
-		for j := 0; j < len(parsed[i]); j++ {
-			if strings.Contains(OPS, parsed[i][j][0]) && parsed[i][j][0] != "-" {
+	for i := 0; i < len(ctree); i++ {
+		for j := 0; j < len(ctree[i]); j++ {
+			if strings.Contains(OPS, ctree[i][j][0]) && ctree[i][j][0] != "-" {
 				log.Fatal("Syntax error: expression " + strconv.Itoa(i) + "." + strconv.Itoa(j) +
-					" cannot begin with \"" + parsed[i][j][0] + "\"")
+					" cannot begin with \"" + ctree[i][j][0] + "\"")
 			}
-			if strings.Contains(OPS, parsed[i][j][len(parsed[i][j])-1]) {
+			if strings.Contains(OPS, ctree[i][j][len(ctree[i][j])-1]) {
 				log.Fatal("Syntax error: expression " + strconv.Itoa(i) + "." + strconv.Itoa(j) +
-					" cannot end with \"" + parsed[i][j][len(parsed[i][j])-1] + "\"")
+					" cannot end with \"" + ctree[i][j][len(ctree[i][j])-1] + "\"")
 			}
 		}
 	}
 
-	return parsed
+	return ctree
 }
 
 // Calculates the result of a [3]string
@@ -298,8 +298,8 @@ func calc(parsed [][][]string) string {
 }
 
 func main() {
-	// Gets the expression from the user, runs it through a lexer, parses it,
+	// Gets the expression from the user, parses it, organizes it into a tree
 	// and calculates the result and prints it
-	result := calc(parser(lexer(p.Input("Enter an equation (without spaces): "))))
+	result := calc(calcTree(parser(p.Input("Enter an equation (without spaces): "))))
 	fmt.Println("Answer is:", result)
 }
